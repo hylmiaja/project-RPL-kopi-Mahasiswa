@@ -1,0 +1,347 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// Auth Models (NextAuth.js Prisma Adapter)
+// ─────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────
+// Core Models
+// ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String?
+  role String @default("PELANGGAN")
+  image     String?
+  phone     String @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  orders Order[]
+  bookings Booking[]
+  reviews Review[]
+  rewards Reward[]
+  kasirOrders Order[] @relation("KasirOrders")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// Domain Models
+// ─────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  price       Float 
+  imageUrl    String?
+  active      Boolean @default(true)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  recipes     ProductRecipe[]
+  orderItems  OrderItem[]
+  promotions  PromotionProduct[]
+  reviews     Review[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Ingredient {
+  id           String   @id @default(cuid())
+  name         String
+  unit         String
+  costPerUnit  Float 
+  stock        Float  @default(0)
+  minStock     Float  @default(0)
+  averageCost  Float  @default(0)
+  recipes      ProductRecipe[]
+  purchaseItems PurchaseOrderItem[]
+  stockMovements StockMovement[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ProductRecipe {
+  id            String   @id @default(cuid())
+  productId     String
+  ingredientId  String
+  quantity      Float  // amount of ingredient per one product unit
+  product       Product   @relation(fields: [productId], references: [id])
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
+  @@unique([productId, ingredientId])
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  code           String        @unique
+  userId         String?
+  kasirId        String?
+  status         String        @default("PENDING")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  totalAmount    Float         @default(0)
+  discountAmount Float         @default(0)
+  user           User?         @relation(fields: [userId], references: [id])
+  kasir          User?         @relation("KasirOrders", fields: [kasirId], references: [id])
+  items          OrderItem[]
+  stockAdjusted  Boolean       @default(false)
+  payment        Payment?
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  time        String
+  capacity    Int
+  price       Float  @default(0)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  bookings    Booking[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  seats       Int      @default(1)
+  totalAmount Float  @default(0)
+  status String @default("PENDING")
+  createdAt   DateTime @default(now())
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int @default(1)
+  note       String?
+  unitPrice  Float 
+  discount   Float  @default(0)
+  subtotal   Float 
+  order      Order    @relation(fields: [orderId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  method String
+  amountPaid  Float 
+  changeGiven Float  @default(0)
+  transactionId String?
+  paidAt      DateTime @default(now())
+  orderId     String? @unique
+  order       Order?    @relation(fields: [orderId], references: [id])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  contactInfo String?
+  address     String?
+  purchaseOrders PurchaseOrder[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  supplierId  String
+  code        String   @unique
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  expectedAt  DateTime?
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  items       PurchaseOrderItem[]
+  receipts    GoodsReceipt[]
+}
+
+model PurchaseOrderItem {
+  id           String   @id @default(cuid())
+  purchaseOrderId String
+  ingredientId String
+  quantity     Float 
+  unitCost     Float 
+  totalCost    Float 
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  receipts     GoodsReceiptItem[]
+}
+
+model GoodsReceipt {
+  id               String   @id @default(cuid())
+  purchaseOrderId  String
+  receiptNumber    String   @unique
+  receivedAt       DateTime @default(now())
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  items            GoodsReceiptItem[]
+}
+
+model GoodsReceiptItem {
+  id                String   @id @default(cuid())
+  goodsReceiptId    String
+  purchaseOrderItemId String
+  quantityReceived  Float 
+  goodsReceipt      GoodsReceipt @relation(fields: [goodsReceiptId], references: [id])
+  purchaseOrderItem PurchaseOrderItem @relation(fields: [purchaseOrderItemId], references: [id])
+}
+
+model StockMovement {
+  id           String   @id @default(cuid())
+  ingredientId String
+  type String
+  quantity     Float 
+  relatedId    String?   // could reference OrderItem, GoodsReceiptItem, etc.
+  description  String?
+  createdAt    DateTime @default(now())
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+}
+
+model Promotion {
+  id          String   @id @default(cuid())
+  name        String
+  type String
+  value       Float  // percent or fixed amount
+  startDate   DateTime
+  endDate     DateTime
+  active      Boolean @default(true)
+  products    PromotionProduct[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PromotionProduct {
+  id          String   @id @default(cuid())
+  promotionId String
+  productId   String
+  promotion   Promotion @relation(fields: [promotionId], references: [id])
+  product     Product   @relation(fields: [productId], references: [id])
+  @@unique([promotionId, productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int @default(5)
+  comment   String?
+  createdAt DateTime @default(now())
+  product   Product @relation(fields: [productId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+}
+
+// ─────────────────────────────────────────
+// Business Models (Report, Reward, Schedule)
+// ─────────────────────────────────────────
+
+model Report {
+  id               String   @id @default(cuid())
+  tanggal          DateTime @default(now())
+  totalPesanan     Int      @default(0)
+  totalPendapatan  Float    @default(0)
+  pelangganBaru    Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@map("reports")
+}
+
+model Reward {
+  id            String   @id @default(cuid())
+  userId        String
+  poin          Int      @default(0)
+  tanggalUpdate DateTime @default(now()) @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@map("rewards")
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  hari        String   // Senin, Selasa, ... Minggu
+  jamBuka     String   // e.g. "07:00"
+  jamTutup    String   // e.g. "21:00"
+  shiftKasir  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("schedules")
+}
+
+// ─────────────────────────────────────────
+// Settings Model for AI Model Switcher
+// ─────────────────────────────────────────
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

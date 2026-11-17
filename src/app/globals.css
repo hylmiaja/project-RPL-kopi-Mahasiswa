@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════
+   KOPI MAHASISWA — Professional SaaS Design System
+   Tema: Crisp Minimalist (Slate & Indigo)
+   ═══════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* ── Color Tokens ── */
+    --primary:      #2563eb; /* Blue 600 */
+    --primary-hover:#1d4ed8; /* Blue 700 */
+    --bg-main:      #ffffff;
+    --bg-muted:     #f8fafc; /* Slate 50 */
+    --text-main:    #0f172a; /* Slate 900 */
+    --text-muted:   #64748b; /* Slate 500 */
+    --border:       #e2e8f0; /* Slate 200 */
+    --surface:      #ffffff;
+    
+    /* ── Fonts ── */
+    --font-sans:    "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg-muted);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  /* ── Custom Scrollbar ── */
+  ::-webkit-scrollbar       { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  ::selection {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: var(--primary);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════ */
+@layer utilities {
+
+  /* ── Gradients ── */
+  .gradient-primary {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  }
+
+  /* ── Glass Effects ── */
+  .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  /* ── Shadows ── */
+  .shadow-soft {
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  }
+  .shadow-hover {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .shadow-hover:hover {
+    box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    background: var(--text-main);
+    color: white;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  .btn-primary:hover {
+    background: #1e293b; /* Slate 800 */
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--text-main);
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  .btn-secondary:hover {
+    background: var(--bg-muted);
+  }
+
+  /* ── Form Inputs ── */
+  .input-professional {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    transition: all 0.15s ease;
+    width: 100%;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  .input-professional:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  .input-professional::placeholder { color: var(--text-muted); }
+
+  /* ── Sidebar Active State ── */
+  .nav-active {
+    background: #f1f5f9; /* Slate 100 */
+    color: var(--text-main) !important;
+    font-weight: 600;
+  }
+  .nav-item {
+    transition: all 0.15s ease;
+    border-radius: 6px;
+  }
+  .nav-item:hover {
+    background: #f8fafc;
+    color: var(--text-main) !important;
+  }
+}
